@@ -1,0 +1,23 @@
+{
+    "extends": "@repo/typescript-config/react-library.json",
+    "compilerOptions": {
+      "lib": ["es2020"],
+      "target": "es2022" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+      "module": "NodeNext" /* Specify what module code is generated. */,
+      "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+      "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+      "skipLibCheck": true, /* Skip type checking all .d.ts files. */
+      "sourceMap": true,
+      "moduleResolution": "NodeNext",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "noImplicitThis": true,
+      "allowJs": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+    }
+}
+  

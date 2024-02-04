@@ -1,0 +1,1830 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["views"]
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+generator kysely {
+    provider     = "prisma-kysely"
+    output       = "../src/db"
+    fileName     = "types.ts"
+    enumFileName = "enums.ts"
+}
+
+model AuthSession {
+    id        String   @id @unique
+    userId    String
+    expiresAt DateTime
+    auth_user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("auth_session")
+}
+
+model AuthKey {
+    id              String   @id @unique
+    hashed_password String?
+    user_id         String
+    user            AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+    @@index([user_id])
+    @@map("auth_key")
+}
+
+model AuthUser {
+    id                                               String                             @id @unique
+    name                                             String?
+    first_name                                       String?
+    middle_name                                      String?
+    last_name                                        String?
+    designation                                      String?
+    phone_number                                     String
+    email                                            String                             @unique
+    email_verified                                   DateTime?
+    profile_image_url                                String
+    is_onboarding_complete                           Boolean?                           @default(false)
+    is_active                                        Boolean?                           @default(true)
+    is_deleted                                       Boolean?                           @default(false)
+    company_id                                       String?
+    created_by_id                                    String?
+    created_at                                       DateTime                           @default(now())
+    last_updated_at                                  DateTime                           @updatedAt
+    phone_country_code_id                            String?
+    forgotPasswordExpiry                             DateTime?
+    forgotPasswordToken                              String?
+    roles                                            String[]
+    onboarding_completed_date                        DateTime?
+    last_logged_at                                   DateTime?
+    number_format                                    Boolean?                           @default(false)
+    assessment_master_created_by                     assessment_master[]                @relation("created_by")
+    assessment_master_last_updated_by                assessment_master[]                @relation("last_updated_by")
+    assessment_supplier_audit_created_by             assessment_supplier_audit[]        @relation("created_by")
+    assessment_supplier_audit_last_updated_by        assessment_supplier_audit[]        @relation("last_updated_by")
+    AuthKey                                          AuthKey[]
+    AuthSession                                      AuthSession[]
+    bu_user_mapping                                  bu_user_mapping[]
+    comment                                          comment[]
+    auditor                                          customer_auditor[]                 @relation("auditor")
+    auditor_created_by                               customer_auditor[]                 @relation("created_by")
+    auditor_last_updated_by                          customer_auditor[]                 @relation("last_updated_by")
+    customer_created_by                              customer_company[]                 @relation("created_by")
+    customer_last_pdated_by                          customer_company[]                 @relation("last_updated_by")
+    customer_supplier                                customer_supplier[]
+    energy_consumption_created_by                    energy_consumption[]               @relation("energy_consumption_created_by_id")
+    energy_consumption_last_updated_by               energy_consumption[]               @relation("energy_consumption_last_updated_by_id")
+    event_user_mapping                               event_user_mapping[]
+    fugitive_emission_created_by                     fugitive_emission[]                @relation("fugitive_emission_created_by_id")
+    fugitive_emission_last_updated_by                fugitive_emission[]                @relation("fugitive_emission_last_updated_by_id")
+    mobile_consumption_created_by                    mobile_consumption[]               @relation("mobile_consumption_created_by_id")
+    mobile_consumption_last_updated_by               mobile_consumption[]               @relation("mobile_consumption_last_updated_by_id")
+    process_emission_created_by                      process_emission[]                 @relation("process_emission_created_by_id")
+    process_emission_last_updated_by                 process_emission[]                 @relation("process_emission_last_updated_by_id")
+    report                                           report[]                           @relation("report_created_by_id")
+    report_comment                                   report_comment[]
+    report_question_user_mapping                     report_question_user_mapping[]
+    staionary_combustion_consumption_created_by      staionary_combustion_consumption[] @relation("staionary_combustion_consumption_created_by_id")
+    staionary_combustion_consumption_last_updated_by staionary_combustion_consumption[] @relation("staionary_combustion_consumption_last_updated_by_id")
+    supporting_evidence                              supporting_evidence[]
+    company                                          company?                           @relation(fields: [company_id], references: [id])
+    creator                                          AuthUser?                          @relation("creator_user", fields: [created_by_id], references: [id])
+    created_users                                    AuthUser[]                         @relation("creator_user")
+    phone_country_code                               phone_country_code?                @relation(fields: [phone_country_code_id], references: [id])
+    admin_steam_company_mapping                      admin_steam_company_mapping[]
+    hashed_password                                  String?
+
+    @@map("user")
+}
+
+model admin_steam_company_mapping {
+    id         String   @id @default(cuid())
+    user       AuthUser @relation(fields: [authUserId], references: [id])
+    company    company  @relation(fields: [companyId], references: [id])
+    authUserId String
+    companyId  String
+
+    @@unique([authUserId, companyId])
+}
+
+model phone_country_code {
+    id           String     @id @default(cuid())
+    country_code Int        @unique
+    country      country[]
+    user         AuthUser[]
+}
+
+model company {
+    id                                          String                                        @id @default(cuid())
+    company_name                                String
+    year_of_incorporation                       DateTime?
+    identification_number                       String?                                       @unique
+    industry_id                                 String?
+    country_id                                  String
+    profile_image_url                           String?
+    website                                     String?
+    full_address                                String?
+    partner                                     String?                                       @default("oren")
+    business_unit                               business_unit[]
+    hq_country                                  country                                       @relation(fields: [country_id], references: [id])
+    industry                                    industry?                                     @relation(fields: [industry_id], references: [id])
+    customer                                    customer_company[]
+    emission_energy_fuel_source_aggregate       emission_energy_fuel_source_aggregate[]
+    emission_energy_supplier_category_aggregate emission_energy_supplier_category_aggregate[]
+    energy_consumption                          energy_consumption[]
+    esg_aggregated_indicator                    esg_aggregated_indicator[]
+    event_user_mapping                          event_user_mapping[]
+    fugitive_emissions                          fugitive_emission[]
+    mobile_consumption                          mobile_consumption[]
+    process_emissions                           process_emission[]
+    staionary_combustion_consumption            staionary_combustion_consumption[]
+    supplier_company                            supplier_company[]
+    user                                        AuthUser[]
+    admin_steam_company_mapping                 admin_steam_company_mapping[]
+}
+
+model country {
+    id                     String              @id @default(cuid())
+    country_name           String
+    country_name_abbr      String              @unique
+    country_name_full      String
+    country_code_alpha_3   String              @unique
+    id_type                String?
+    currency_id            String?
+    default_country_codeId String?
+    address                address[]
+    company                company[]
+    default_currency       currency?           @relation(fields: [currency_id], references: [id])
+    default_country_code   phone_country_code? @relation(fields: [default_country_codeId], references: [id])
+    location               location[]
+}
+
+model currency {
+    id              String             @id @default(cuid())
+    currency_name   String
+    currency_symbol String
+    country         country[]
+    customer        customer_company[]
+}
+
+model date_time_format {
+    id                    String             @id @default(cuid())
+    format                String
+    type                  String
+    customer_company_date customer_company[] @relation("date_format")
+    customer_company_time customer_company[] @relation("time_format")
+}
+
+model address {
+    id              String        @id @default(cuid())
+    address_line_1  String
+    address_line_2  String?
+    pincode         String
+    address_type_id String?
+    countryId       String?
+    address_type    address_type? @relation(fields: [address_type_id], references: [id])
+    country         country?      @relation(fields: [countryId], references: [id])
+}
+
+model address_type {
+    id      String    @id @default(cuid())
+    type    String
+    address address[]
+}
+
+model supplier_category {
+    id                                          String                                        @id @default(cuid())
+    category_name                               String
+    description                                 String?
+    assessment_master_supplier_category_mapping assessment_master_supplier_category_mapping[]
+    assessment_supplier_category_mapping        assessment_supplier_category_mapping[]
+    customer_supplier_category_mapping          customer_supplier_category_mapping[]
+    emission_energy_supplier_category_aggregate emission_energy_supplier_category_aggregate[]
+}
+
+model material_topic {
+    id                                             String                                           @id @default(cuid())
+    material_topic                                 String
+    material_topic_description                     String?
+    reporting_framework_id                         String?
+    is_active                                      Boolean                                          @default(true)
+    reporting_framework                            reporting_framework?                             @relation(fields: [reporting_framework_id], references: [id])
+    sequence                                       Int                                              @default(0)
+    esg                                            ESG?
+    assessment_master                              assessment_master[]
+    customer_material_topic                        customer_material_topic[]
+    industry_material_topic                        industry_material_topic[]
+    material_topic_es_indicator_list_mapping       material_topic_es_indicator_list_mapping[]
+    questions                                      questions[]
+    report_material_topic                          report_material_topic[]
+    supp_material_topic_esg_indicator_list_mapping supp_material_topic_esg_indicator_list_mapping[]
+}
+
+model industry {
+    id                      String                    @id @default(cuid())
+    industry_name           String
+    description             String?
+    company                 company[]
+    industry_material_topic industry_material_topic[]
+}
+
+model industry_material_topic {
+    id                String         @id @default(cuid())
+    industry_id       String
+    material_topic_id String
+    industry          industry       @relation(fields: [industry_id], references: [id])
+    material_topic    material_topic @relation(fields: [material_topic_id], references: [id])
+}
+
+model customer_company {
+    id                                        String                    @id @default(cuid())
+    company_id                                String
+    is_active                                 Boolean                   @default(true)
+    supplier_asssessment_frequency            String                    @default("yearly")
+    preferred_currency                        String
+    date_format_id                            String?
+    time_format_id                            String?
+    created_date                              DateTime                  @default(now())
+    created_by_id                             String
+    last_updated_at                           DateTime                  @updatedAt
+    last_updated_by_id                        String
+    financial_year_cycle                      String?
+    number_format                             Boolean?                  @default(true)
+    automated_email_reminder_for_supplier     Boolean?                  @default(true)
+    automated_email_reminder_for_collaborator Boolean?                  @default(true)
+    assessment_master                         assessment_master[]
+    customer_auditor                          customer_auditor[]
+    company                                   company                   @relation(fields: [company_id], references: [id])
+    created_by                                AuthUser                  @relation("created_by", fields: [created_by_id], references: [id])
+    date_format                               date_time_format?         @relation("date_format", fields: [date_format_id], references: [id])
+    last_updated_by                           AuthUser                  @relation("last_updated_by", fields: [last_updated_by_id], references: [id])
+    currency                                  currency                  @relation(fields: [preferred_currency], references: [id])
+    time_format                               date_time_format?         @relation("time_format", fields: [time_format_id], references: [id])
+    customer_material_topic                   customer_material_topic[]
+    customer_supplier                         customer_supplier[]
+}
+
+model customer_material_topic {
+    id               String           @id @default(cuid())
+    customer_id      String
+    material_topicId String
+    is_active        Boolean          @default(true)
+    weightage        Int              @default(0)
+    customer         customer_company @relation(fields: [customer_id], references: [id])
+    material_topic   material_topic   @relation(fields: [material_topicId], references: [id])
+
+    @@unique([customer_id, material_topicId])
+}
+
+model supplier_company {
+    id                           String                         @id @default(cuid())
+    company_id                   String
+    is_active                    Boolean                        @default(true)
+    is_deleted                   Boolean                        @default(false)
+    assessment_supplier_audit    assessment_supplier_audit[]
+    customer_supplier            customer_supplier[]
+    supplier_asssessment         supplier_asssessment[]
+    supplier_asssessment_mapping supplier_asssessment_mapping[]
+    company                      company                        @relation(fields: [company_id], references: [id])
+}
+
+model customer_supplier {
+    id                                 String                               @id @default(cuid())
+    customer_id                        String
+    supplier_company_id                String
+    business_criticality               String
+    spoc_id                            String
+    is_active                          Boolean                              @default(true)
+    is_deleted                         Boolean                              @default(false)
+    last_updated_at                    DateTime                             @default(now()) @updatedAt
+    annual_spend                       String?
+    customer                           customer_company                     @relation(fields: [customer_id], references: [id])
+    spoc                               AuthUser                             @relation(fields: [spoc_id], references: [id])
+    supplier_company                   supplier_company                     @relation(fields: [supplier_company_id], references: [id])
+    customer_supplier_category_mapping customer_supplier_category_mapping[]
+    customer_supplier_setting          customer_supplier_setting[]
+}
+
+model customer_supplier_category_mapping {
+    id                   String            @id @default(cuid())
+    customer_supplier_id String
+    supplier_category_id String
+    effective_start_date DateTime
+    effective_end_date   DateTime
+    is_deleted           Boolean           @default(false)
+    customer_supplier    customer_supplier @relation(fields: [customer_supplier_id], references: [id])
+    supplier_category    supplier_category @relation(fields: [supplier_category_id], references: [id])
+}
+
+model customer_supplier_setting {
+    id                    String            @id @default(cuid())
+    customer_supplier_id  String
+    start_date            DateTime          @db.Date
+    end_date              DateTime          @db.Date
+    customer_annual_spend Decimal
+    supply_percentage     Float
+    customer_supplier     customer_supplier @relation(fields: [customer_supplier_id], references: [id])
+    rp_code               String?
+    reporting_period      reporting_period? @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([customer_supplier_id, start_date, end_date])
+}
+
+model customer_auditor {
+    id                                     String                                   @id @default(cuid())
+    customer_id                            String
+    auditor_id                             String
+    is_deleted                             Boolean                                  @default(false)
+    created_at                             DateTime                                 @default(now())
+    created_by_id                          String
+    last_updated_at                        DateTime                                 @default(now())
+    last_updated_by_id                     String
+    assessment_master                      assessment_master[]
+    assessment_supplier_audit              assessment_supplier_audit[]
+    auditor                                AuthUser                                 @relation("auditor", fields: [auditor_id], references: [id])
+    created_by                             AuthUser                                 @relation("created_by", fields: [created_by_id], references: [id])
+    customer                               customer_company                         @relation(fields: [customer_id], references: [id])
+    last_updated_by                        AuthUser                                 @relation("last_updated_by", fields: [last_updated_by_id], references: [id])
+    energy_consumption_audit               energy_consumption_audit[]
+    fugitive_emission_audit                fugitive_emission_audit[]
+    mobile_consumption_audit               mobile_consumption_audit[]
+    process_emission_audit                 process_emission_audit[]
+    report                                 report[]
+    staionary_combustion_consumption_audit staionary_combustion_consumption_audit[]
+
+    @@unique([customer_id, auditor_id])
+}
+
+model questions {
+    id                                           Int                                            @id @default(autoincrement())
+    question_ref_id                              String
+    title                                        String
+    description                                  String
+    format                                       String
+    sequence                                     Int
+    material_topic_id                            String
+    is_active                                    Boolean                                        @default(true)
+    is_supply_chain                              Boolean                                        @default(true)
+    is_internal                                  Boolean                                        @default(true)
+    question_topic_type                          QUESTION_TOPIC_TYPE                            @default(NULL)
+    assesment_comment                            assesment_comment[]
+    assessment_master_question_mapping           assessment_master_question_mapping[]
+    materail_topic                               material_topic                                 @relation(fields: [material_topic_id], references: [id])
+    report_question                              report_question[]
+    supplier_asssessment                         supplier_asssessment[]
+    supporting_evidence                          supporting_evidence[]
+    answer_layout                                answer_layout[]
+    reporting_framework_section_question_mapping reporting_framework_section_question_mapping[]
+    data_hub                                     data_hub[]
+
+    @@unique([question_ref_id, material_topic_id, sequence])
+}
+
+model measurement_basis {
+    id                                   Int                                    @id @default(autoincrement())
+    measurement_basis_name               String                                 @unique
+    emission_types                       emission_types[]
+    energy_source                        energy_source[]
+    fuel                                 fuel[]
+    measurement_conversion               measurement_conversion[]
+    measurement_unit                     measurement_unit[]
+    data_point                           data_point[]
+    data_point_measurement_basis_mapping data_point_measurement_basis_mapping[]
+}
+
+model measurement_unit {
+    id                               Int                                @id @default(autoincrement())
+    measurement_unit_name            String                             @unique
+    symbol                           String                             @unique
+    is_preferred_conversion_unit     Boolean                            @default(false)
+    is_main_conversion_unit          Boolean                            @default(false)
+    measurement_basis_id             Int
+    energy_consumption               energy_consumption[]
+    fugitive_emissions               fugitive_emission[]
+    measurement_conversion_from_unit measurement_conversion[]           @relation("from_unit")
+    measurement_conversion_to_unit   measurement_conversion[]           @relation("to_unit")
+    measurement_basis                measurement_basis                  @relation(fields: [measurement_basis_id], references: [id])
+    mobile_consumption               mobile_consumption[]
+    process_emissions                process_emission[]
+    staionary_combustion_consumption staionary_combustion_consumption[]
+}
+
+model measurement_conversion {
+    id                   Int               @id @default(autoincrement())
+    conversion_type      String
+    measurement_basis_id Int
+    from_unit_id         Int
+    to_unit_id           Int
+    factor               Float
+    from_unit            measurement_unit  @relation("from_unit", fields: [from_unit_id], references: [id])
+    measurement_basis    measurement_basis @relation(fields: [measurement_basis_id], references: [id])
+    to_unit              measurement_unit  @relation("to_unit", fields: [to_unit_id], references: [id])
+
+    @@unique([from_unit_id, to_unit_id])
+}
+
+model fuel {
+    id                                                        Int                                                         @id @default(autoincrement())
+    measurement_basis_id                                      Int
+    calorific_value                                           Float
+    calorific_value_unit                                      String
+    fuel_name                                                 String                                                      @unique
+    density                                                   Float?
+    density_factor_unit                                       String?
+    is_stationary_combustion                                  Boolean                                                     @default(false)
+    is_renewable_fuel_type                                    Boolean                                                     @default(false)
+    emission_energy_fuel_source_aggregate                     emission_energy_fuel_source_aggregate[]
+    measurement_basis                                         measurement_basis                                           @relation(fields: [measurement_basis_id], references: [id])
+    mobile_consumption                                        mobile_consumption[]
+    staionary_combustion_consumption                          staionary_combustion_consumption[]
+    stationary_combustion_emission_factor                     stationary_combustion_emission_factor[]
+    transportation_fuel_type                                  transportation_fuel_type[]
+    answer_layout_stationary_combustion_fuel_sequence_mapping answer_layout_stationary_combustion_fuel_sequence_mapping[]
+}
+
+model stationary_combustion_emission_factor {
+    id                    Int       @id @default(autoincrement())
+    fuel_id               Int
+    emission_factor       Float
+    emission_factor_basis String
+    emission_gas          String
+    location_id           String?
+    fuel                  fuel      @relation(fields: [fuel_id], references: [id])
+    location              location? @relation(fields: [location_id], references: [id])
+
+    @@unique([fuel_id, emission_factor_basis, emission_gas, location_id])
+}
+
+model emission_types {
+    id                                                              Int                                                               @id @default(autoincrement())
+    emission_gas                                                    String                                                            @unique
+    measurement_basis_id                                            Int
+    gwp                                                             Float?
+    emission_type                                                   String
+    is_process_emission                                             Boolean                                                           @default(false)
+    is_fugitive_emission                                            Boolean                                                           @default(false)
+    measurement_basis                                               measurement_basis                                                 @relation(fields: [measurement_basis_id], references: [id])
+    fugitive_emissions                                              fugitive_emission[]
+    process_emissions                                               process_emission[]
+    answer_layout_process_emission_emission_types_sequence_mapping  answer_layout_process_emission_emission_types_sequence_mapping[]
+    answer_layout_fugitive_emission_emission_types_sequence_mapping answer_layout_fugitive_emission_emission_types_sequence_mapping[]
+}
+
+model transportation_mode {
+    id                                                              Int                                                               @id @default(autoincrement())
+    transportation_mode_name                                        String                                                            @unique
+    mobile_consumption                                              mobile_consumption[]
+    transportation_fuel_type                                        transportation_fuel_type[]
+    answer_layout_mobile_consumption_transportation_mode_sequence_m answer_layout_mobile_consumption_transportation_mode_sequence_m[]
+}
+
+model transportation_fuel_type {
+    id                     Int                 @id @default(autoincrement())
+    fuel_id                Int
+    transportation_mode_id Int
+    fuel                   fuel                @relation(fields: [fuel_id], references: [id])
+    transportation_mode    transportation_mode @relation(fields: [transportation_mode_id], references: [id])
+
+    @@unique([fuel_id, transportation_mode_id])
+}
+
+model energy_source {
+    id                                                              Int                                                               @id @default(autoincrement())
+    source_name                                                     String
+    is_renewable_energy_type                                        Boolean
+    measurement_basis_id                                            Int
+    energy_consumption                                              energy_consumption[]
+    energy_emission_factor                                          energy_emission_factor[]
+    measurement_basis                                               measurement_basis                                                 @relation(fields: [measurement_basis_id], references: [id])
+    answer_layout_energy_consumption_energy_source_sequence_mapping answer_layout_energy_consumption_energy_source_sequence_mapping[]
+}
+
+model energy_emission_factor {
+    id               Int           @id @default(autoincrement())
+    energy_source_id Int
+    emission_factor  Float
+    emission_gas     String
+    location_id      String?
+    energy_source    energy_source @relation(fields: [energy_source_id], references: [id])
+    location         location?     @relation(fields: [location_id], references: [id])
+
+    @@unique([energy_source_id, emission_gas, location_id])
+}
+
+model staionary_combustion_consumption {
+    id                                     String                                   @id @default(cuid())
+    company_id                             String
+    input_consumption                      Float?
+    input_unit_id                          Int?
+    input_start_date                       DateTime                                 @db.Date
+    input_end_date                         DateTime                                 @db.Date
+    fuel_id                                Int
+    is_submitted                           Boolean                                  @default(false)
+    created_at                             DateTime                                 @default(now())
+    created_by_id                          String
+    is_first_audit_complete                Boolean                                  @default(false)
+    last_updated_by_id                     String
+    updated_at                             DateTime                                 @updatedAt
+    is_data_available                      Boolean                                  @default(true)
+    bu_id                                  String
+    business_unit                          business_unit                            @relation(fields: [bu_id], references: [id])
+    company                                company                                  @relation(fields: [company_id], references: [id])
+    created_by                             AuthUser                                 @relation("staionary_combustion_consumption_created_by_id", fields: [created_by_id], references: [id])
+    fuel                                   fuel                                     @relation(fields: [fuel_id], references: [id])
+    input_unit                             measurement_unit?                        @relation(fields: [input_unit_id], references: [id])
+    last_updated_by                        AuthUser                                 @relation("staionary_combustion_consumption_last_updated_by_id", fields: [last_updated_by_id], references: [id])
+    staionary_combustion_consumption_audit staionary_combustion_consumption_audit[]
+    rp_code                                String?
+    reporting_period                       reporting_period?                        @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, fuel_id, input_start_date, input_end_date, bu_id])
+}
+
+model staionary_combustion_consumption_audit {
+    id                                  String                           @id @default(cuid())
+    staionary_combustion_consumption_id String
+    customer_auditor_id                 String
+    audit_status                        AUDIT_STATUS                     @default(PENDING)
+    audit_completion_date               DateTime?                        @db.Date
+    customer_auditor                    customer_auditor                 @relation(fields: [customer_auditor_id], references: [id])
+    staionary_combustion_consumption    staionary_combustion_consumption @relation(fields: [staionary_combustion_consumption_id], references: [id])
+
+    @@unique([staionary_combustion_consumption_id, customer_auditor_id])
+}
+
+model mobile_consumption {
+    id                       String                     @id @default(cuid())
+    company_id               String
+    input_consumption        Float?
+    input_unit_id            Int?
+    input_start_date         DateTime                   @db.Date
+    input_end_date           DateTime                   @db.Date
+    fuel_id                  Int
+    transportation_mode_id   Int
+    is_submitted             Boolean                    @default(false)
+    created_at               DateTime                   @default(now())
+    created_by_id            String
+    is_first_audit_complete  Boolean                    @default(false)
+    last_updated_at          DateTime                   @updatedAt
+    last_updated_by_id       String
+    is_data_available        Boolean                    @default(true)
+    bu_id                    String
+    business_unit            business_unit              @relation(fields: [bu_id], references: [id])
+    company                  company                    @relation(fields: [company_id], references: [id])
+    created_by               AuthUser                   @relation("mobile_consumption_created_by_id", fields: [created_by_id], references: [id])
+    fuel                     fuel                       @relation(fields: [fuel_id], references: [id])
+    input_unit               measurement_unit?          @relation(fields: [input_unit_id], references: [id])
+    last_updated_by          AuthUser                   @relation("mobile_consumption_last_updated_by_id", fields: [last_updated_by_id], references: [id])
+    transportation_mode      transportation_mode        @relation(fields: [transportation_mode_id], references: [id])
+    mobile_consumption_audit mobile_consumption_audit[]
+    rp_code                  String?
+    reporting_period         reporting_period?          @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, fuel_id, input_start_date, input_end_date, transportation_mode_id, bu_id])
+}
+
+model mobile_consumption_audit {
+    id                    String             @id @default(cuid())
+    mobile_consumption_id String
+    customer_auditor_id   String
+    audit_status          AUDIT_STATUS       @default(PENDING)
+    audit_completion_date DateTime?          @db.Date
+    customer_auditor      customer_auditor   @relation(fields: [customer_auditor_id], references: [id])
+    mobile_consumption    mobile_consumption @relation(fields: [mobile_consumption_id], references: [id])
+
+    @@unique([mobile_consumption_id, customer_auditor_id])
+}
+
+model process_emission {
+    id                      String                   @id @default(cuid())
+    company_id              String
+    input_emission          Float?
+    input_unit_id           Int?
+    input_start_date        DateTime                 @db.Date
+    input_end_date          DateTime                 @db.Date
+    emission_type_id        Int
+    is_submitted            Boolean                  @default(false)
+    created_at              DateTime                 @default(now())
+    created_by_id           String
+    is_first_audit_complete Boolean                  @default(false)
+    last_updated_at         DateTime                 @updatedAt
+    last_updated_by_id      String
+    is_data_available       Boolean                  @default(true)
+    bu_id                   String
+    business_unit           business_unit            @relation(fields: [bu_id], references: [id])
+    company                 company                  @relation(fields: [company_id], references: [id])
+    created_by              AuthUser                 @relation("process_emission_created_by_id", fields: [created_by_id], references: [id])
+    emission_type           emission_types           @relation(fields: [emission_type_id], references: [id])
+    input_unit              measurement_unit?        @relation(fields: [input_unit_id], references: [id])
+    last_updated_by         AuthUser                 @relation("process_emission_last_updated_by_id", fields: [last_updated_by_id], references: [id])
+    process_emission_audit  process_emission_audit[]
+    rp_code                 String?
+    reporting_period        reporting_period?        @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, emission_type_id, input_start_date, input_end_date, bu_id])
+}
+
+model process_emission_audit {
+    id                    String           @id @default(cuid())
+    process_emission_id   String
+    customer_auditor_id   String
+    audit_status          AUDIT_STATUS     @default(PENDING)
+    audit_completion_date DateTime?        @db.Date
+    customer_auditor      customer_auditor @relation(fields: [customer_auditor_id], references: [id])
+    process_emission      process_emission @relation(fields: [process_emission_id], references: [id])
+
+    @@unique([process_emission_id, customer_auditor_id])
+}
+
+model fugitive_emission {
+    id                      String                    @id @default(cuid())
+    company_id              String
+    input_emission          Float?
+    input_unit_id           Int?
+    input_start_date        DateTime                  @db.Date
+    input_end_date          DateTime                  @db.Date
+    emission_type_id        Int
+    is_submitted            Boolean                   @default(false)
+    created_at              DateTime                  @default(now())
+    created_by_id           String
+    is_first_audit_complete Boolean                   @default(false)
+    last_updated_at         DateTime                  @updatedAt
+    last_updated_by_id      String
+    is_data_available       Boolean                   @default(true)
+    bu_id                   String
+    business_unit           business_unit             @relation(fields: [bu_id], references: [id])
+    company                 company                   @relation(fields: [company_id], references: [id])
+    created_by              AuthUser                  @relation("fugitive_emission_created_by_id", fields: [created_by_id], references: [id])
+    emission_type           emission_types            @relation(fields: [emission_type_id], references: [id])
+    input_unit              measurement_unit?         @relation(fields: [input_unit_id], references: [id])
+    last_updated_by         AuthUser                  @relation("fugitive_emission_last_updated_by_id", fields: [last_updated_by_id], references: [id])
+    fugitive_emission_audit fugitive_emission_audit[]
+    rp_code                 String?
+    reporting_period        reporting_period?         @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, emission_type_id, input_start_date, input_end_date, bu_id])
+}
+
+model fugitive_emission_audit {
+    id                    String            @id @default(cuid())
+    fugitive_emission_id  String
+    customer_auditor_id   String
+    audit_status          AUDIT_STATUS      @default(PENDING)
+    audit_completion_date DateTime?         @db.Date
+    customer_auditor      customer_auditor  @relation(fields: [customer_auditor_id], references: [id])
+    fugitive_emission     fugitive_emission @relation(fields: [fugitive_emission_id], references: [id])
+
+    @@unique([fugitive_emission_id, customer_auditor_id])
+}
+
+model energy_consumption {
+    id                       String                     @id @default(cuid())
+    company_id               String
+    input_consumption        Float?
+    input_unit_id            Int?
+    input_start_date         DateTime                   @db.Date
+    input_end_date           DateTime                   @db.Date
+    energy_source_id         Int
+    is_submitted             Boolean                    @default(false)
+    created_at               DateTime                   @default(now())
+    created_by_id            String
+    is_first_audit_complete  Boolean                    @default(false)
+    last_updated_at          DateTime                   @updatedAt
+    last_updated_by_id       String
+    is_data_available        Boolean                    @default(true)
+    bu_id                    String
+    business_unit            business_unit              @relation(fields: [bu_id], references: [id])
+    company                  company                    @relation(fields: [company_id], references: [id])
+    created_by               AuthUser                   @relation("energy_consumption_created_by_id", fields: [created_by_id], references: [id])
+    energy_source            energy_source              @relation(fields: [energy_source_id], references: [id])
+    input_unit               measurement_unit?          @relation(fields: [input_unit_id], references: [id])
+    last_updated_by          AuthUser                   @relation("energy_consumption_last_updated_by_id", fields: [last_updated_by_id], references: [id])
+    energy_consumption_audit energy_consumption_audit[]
+    rp_code                  String?
+    reporting_period         reporting_period?          @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, energy_source_id, input_start_date, input_end_date, bu_id])
+}
+
+model energy_consumption_audit {
+    id                    String             @id @default(cuid())
+    energy_consumption_id String
+    customer_auditor_id   String
+    audit_status          AUDIT_STATUS       @default(PENDING)
+    audit_completion_date DateTime?          @db.Date
+    customer_auditor      customer_auditor   @relation(fields: [customer_auditor_id], references: [id])
+    energy_consumption    energy_consumption @relation(fields: [energy_consumption_id], references: [id])
+
+    @@unique([energy_consumption_id, customer_auditor_id])
+}
+
+model assessment_master {
+    id                                          String                                        @id @default(cuid())
+    customer_id                                 String
+    material_topic_id                           String
+    data_start_date                             DateTime                                      @db.Date
+    data_end_date                               DateTime                                      @db.Date
+    audit_date                                  DateTime
+    is_active                                   Boolean                                       @default(true)
+    created_by_id                               String
+    created_at                                  DateTime                                      @default(now())
+    last_updated_by_id                          String
+    last_updated_at                             DateTime                                      @default(now())
+    is_recurring                                Boolean                                       @default(false)
+    busniess_criticality                        String[]
+    customer_auditor_id                         String
+    data_due_date                               DateTime?
+    assessment                                  assessment[]
+    created_by                                  AuthUser                                      @relation("created_by", fields: [created_by_id], references: [id])
+    customer_auditor                            customer_auditor                              @relation(fields: [customer_auditor_id], references: [id])
+    customer_company                            customer_company                              @relation(fields: [customer_id], references: [id])
+    last_updated_by                             AuthUser                                      @relation("last_updated_by", fields: [last_updated_by_id], references: [id])
+    material_topic                              material_topic                                @relation(fields: [material_topic_id], references: [id])
+    assessment_master_question_mapping          assessment_master_question_mapping[]
+    assessment_master_supplier_category_mapping assessment_master_supplier_category_mapping[]
+    rp_code                                     String?
+    reporting_period                            reporting_period?                             @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+}
+
+model assessment_master_supplier_category_mapping {
+    id                   String            @id @default(uuid())
+    assessment_master_id String
+    supplier_category_id String
+    is_deleted           Boolean           @default(false)
+    assessment_master    assessment_master @relation(fields: [assessment_master_id], references: [id])
+    supplier_category    supplier_category @relation(fields: [supplier_category_id], references: [id])
+}
+
+model assessment_master_question_mapping {
+    id                   Int               @id @default(autoincrement())
+    assessment_master_id String
+    question_id          Int
+    is_deleted           Boolean           @default(false)
+    assessment_master    assessment_master @relation(fields: [assessment_master_id], references: [id])
+    question             questions         @relation(fields: [question_id], references: [id])
+}
+
+model assessment {
+    id                                   String                                 @id @default(cuid())
+    assessment_master_id                 String
+    data_start_date                      DateTime                               @db.Date
+    data_end_date                        DateTime                               @db.Date
+    audit_date                           DateTime
+    busniess_criticality                 String[]
+    data_due_date                        DateTime?
+    assessment_master                    assessment_master                      @relation(fields: [assessment_master_id], references: [id])
+    assessment_supplier_audit            assessment_supplier_audit[]
+    assessment_supplier_category_mapping assessment_supplier_category_mapping[]
+    supplier_asssessment                 supplier_asssessment[]
+    supplier_asssessment_mapping         supplier_asssessment_mapping[]
+    rp_code                              String?
+    reporting_period                     reporting_period?                      @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+}
+
+model assessment_supplier_category_mapping {
+    id                           String                         @id @default(uuid())
+    assessment_id                String
+    supplier_category_id         String
+    is_deleted                   Boolean                        @default(false)
+    assessment                   assessment                     @relation(fields: [assessment_id], references: [id])
+    supplier_category            supplier_category              @relation(fields: [supplier_category_id], references: [id])
+    supplier_asssessment_mapping supplier_asssessment_mapping[]
+}
+
+model supplier_asssessment_mapping {
+    id                                      String                               @id @default(cuid())
+    supplier_company_id                     String
+    assessment_id                           String
+    is_submitted                            Boolean                              @default(false)
+    assessment_supplier_category_mapping_id String
+    submittedAt                             DateTime?
+    created_at                              DateTime                             @default(now())
+    assessment_supplier_audit               assessment_supplier_audit[]
+    supplier_asssessment                    supplier_asssessment[]
+    assessment                              assessment                           @relation(fields: [assessment_id], references: [id])
+    assessment_supplier_category_mapping    assessment_supplier_category_mapping @relation(fields: [assessment_supplier_category_mapping_id], references: [id])
+    supplier_company                        supplier_company                     @relation(fields: [supplier_company_id], references: [id])
+
+    @@unique([supplier_company_id, assessment_id])
+}
+
+model supplier_asssessment {
+    id                              String                       @id @default(cuid())
+    supplier_company_id             String
+    assessment_id                   String
+    questions_id                    Int
+    supplier_asssessment_mapping_id String
+    is_data_available               Boolean?                     @default(true)
+    audit_completed_date            DateTime?                    @db.Date
+    audit_status                    AUDIT_STATUS                 @default(PENDING)
+    notes                           String?
+    is_submitted                    Boolean                      @default(false)
+    submittedAt                     DateTime?                    @db.Date
+    question_status                 ASSESSMENT_QUESTION_STATUS   @default(DATA_INCOMPLETE)
+    assesment_comment               assesment_comment[]
+    assessment                      assessment                   @relation(fields: [assessment_id], references: [id])
+    questions                       questions                    @relation(fields: [questions_id], references: [id])
+    supplier_asssessment_mapping    supplier_asssessment_mapping @relation(fields: [supplier_asssessment_mapping_id], references: [id])
+    supplier_company                supplier_company             @relation(fields: [supplier_company_id], references: [id])
+    supporting_evidence             supporting_evidence[]
+}
+
+model supporting_evidence {
+    id                      String  @id @default(cuid())
+    supplier_asssessment_id String?
+    report_question_id      String?
+    link                    String
+    question_id             Int
+
+    name                String
+    created_at          DateTime              @default(now())
+    created_by_id       String
+    created_by          AuthUser              @relation(fields: [created_by_id], references: [id])
+    question            questions             @relation(fields: [question_id], references: [id])
+    supplier_assessment supplier_asssessment? @relation(fields: [supplier_asssessment_id], references: [id])
+    report_question     report_question?      @relation(fields: [report_question_id], references: [id])
+    rp_code             String?
+    reporting_period    reporting_period?     @relation(fields: [rp_code], references: [rp_code])
+    bu_id               String?
+    business_unit       business_unit?        @relation(fields: [bu_id], references: [id])
+}
+
+model assesment_comment {
+    id                      String               @id @default(cuid())
+    supplier_asssessment_id String
+    question_id             Int
+    question                questions            @relation(fields: [question_id], references: [id])
+    supplier_assessment     supplier_asssessment @relation(fields: [supplier_asssessment_id], references: [id])
+    comment                 comment[]
+}
+
+model comment {
+    id                    String            @id @default(cuid())
+    assesment_comments_id String
+    created_by_id         String
+    created_at            DateTime          @default(now())
+    comment_text          String
+    assessment_comments   assesment_comment @relation(fields: [assesment_comments_id], references: [id])
+    created_by            AuthUser          @relation(fields: [created_by_id], references: [id])
+    rp_code               String?
+    reporting_period      reporting_period? @relation(fields: [rp_code], references: [rp_code])
+}
+
+model assessment_supplier_audit {
+    id                              String                       @id @default(cuid())
+    assessment_id                   String
+    supplier_company_id             String
+    customer_auditor_id             String
+    audit_status                    AUDIT_STATUS                 @default(PENDING)
+    created_at                      DateTime                     @default(now())
+    updated_at                      DateTime                     @updatedAt
+    created_by_id                   String
+    last_updated_by_id              String
+    supplier_asssessment_mapping_id String
+    audit_completed_date            DateTime?
+    audit_rejected_date             DateTime?
+    assessment                      assessment                   @relation(fields: [assessment_id], references: [id])
+    created_by                      AuthUser                     @relation("created_by", fields: [created_by_id], references: [id])
+    customer_auditor                customer_auditor             @relation(fields: [customer_auditor_id], references: [id])
+    last_updated_by                 AuthUser                     @relation("last_updated_by", fields: [last_updated_by_id], references: [id])
+    supplier_asssessment_mapping    supplier_asssessment_mapping @relation(fields: [supplier_asssessment_mapping_id], references: [id])
+    supplier_company                supplier_company             @relation(fields: [supplier_company_id], references: [id])
+
+    @@unique([assessment_id, supplier_company_id, customer_auditor_id])
+}
+
+model event_notification {
+    id                      String               @id @default(cuid())
+    event_type              EVENT_TYPE
+    event_notification_data Json
+    event_date              DateTime
+    created_at              DateTime             @default(now())
+    event_user_mapping      event_user_mapping[]
+}
+
+model event_user_mapping {
+    id                     String                 @id @default(cuid())
+    user_id                String?
+    company_id             String?
+    event_notification_id  String
+    notification_user_type NOTIFICATION_USER_TYPE
+    company                company?               @relation(fields: [company_id], references: [id])
+    event_notification     event_notification     @relation(fields: [event_notification_id], references: [id])
+    user                   AuthUser?              @relation(fields: [user_id], references: [id])
+}
+
+model esg_indicator_list {
+    id                                             Int                                              @id @default(autoincrement())
+    esg_indicator_name                             String
+    emission_energy_fuel_source_aggregate          emission_energy_fuel_source_aggregate[]
+    esg_aggregated_indicator                       esg_aggregated_indicator[]
+    material_topic_es_indicator_list_mapping       material_topic_es_indicator_list_mapping[]
+    supp_material_topic_esg_indicator_list_mapping supp_material_topic_esg_indicator_list_mapping[]
+}
+
+model esg_aggregated_indicator {
+    id                  String             @id @default(cuid())
+    company_id          String
+    esg_indicator_id    Int
+    esg_indicator_total Float
+    start_date          DateTime           @db.Date
+    end_date            DateTime           @db.Date
+    created_at          DateTime           @default(now())
+    last_updated_at     DateTime           @updatedAt
+    company             company            @relation(fields: [company_id], references: [id])
+    esg_indicator_list  esg_indicator_list @relation(fields: [esg_indicator_id], references: [id])
+    rp_code             String?
+    reporting_period    reporting_period?  @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, esg_indicator_id, start_date, end_date])
+}
+
+model emission_energy_fuel_source_aggregate {
+    id                   String             @id @default(cuid())
+    company_id           String
+    esg_indicator_id     Int
+    fuel_id              Int
+    emissions_co2e_total Float
+    energy_kj_total      Float
+    start_date           DateTime           @db.Date
+    end_date             DateTime           @db.Date
+    created_at           DateTime           @default(now())
+    last_updated_at      DateTime           @updatedAt
+    company              company            @relation(fields: [company_id], references: [id])
+    esg_indicator_list   esg_indicator_list @relation(fields: [esg_indicator_id], references: [id])
+    fuel                 fuel               @relation(fields: [fuel_id], references: [id])
+    rp_code              String?
+    reporting_period     reporting_period?  @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, fuel_id, esg_indicator_id, start_date, end_date])
+}
+
+model emission_energy_supplier_category_aggregate {
+    id                   String            @id @default(cuid())
+    company_id           String
+    supplier_category_id String
+    emissions_co2e_total Float
+    energy_kj_total      Float
+    start_date           DateTime          @db.Date
+    end_date             DateTime          @db.Date
+    created_at           DateTime          @default(now())
+    last_updated_at      DateTime          @updatedAt
+    company              company           @relation(fields: [company_id], references: [id])
+    supplier_category    supplier_category @relation(fields: [supplier_category_id], references: [id])
+    rp_code              String?
+    reporting_period     reporting_period? @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    @@unique([company_id, supplier_category_id, start_date, end_date])
+}
+
+model job_details {
+    id          Int                 @id @default(autoincrement())
+    job_name    String              @unique
+    description String?
+    job_status  job_execution_log[]
+}
+
+model job_execution_log {
+    id               String      @id @default(cuid())
+    job_id           Int
+    job_started_at   DateTime    @default(now())
+    job_completed_at DateTime?
+    job_status       JOB_STATUS?
+    job_details      job_details @relation(fields: [job_id], references: [id])
+}
+
+model material_topic_es_indicator_list_mapping {
+    material_topic_id     String
+    esg_indicator_list_id Int
+    esg_indicator_list    esg_indicator_list @relation(fields: [esg_indicator_list_id], references: [id])
+    material_topic        material_topic     @relation(fields: [material_topic_id], references: [id])
+
+    @@unique([material_topic_id, esg_indicator_list_id])
+}
+
+model supp_material_topic_esg_indicator_list_mapping {
+    material_topic_id     String
+    esg_indicator_list_id Int
+    esg_indicator_list    esg_indicator_list @relation(fields: [esg_indicator_list_id], references: [id])
+    material_topic        material_topic     @relation(fields: [material_topic_id], references: [id])
+
+    @@unique([material_topic_id, esg_indicator_list_id])
+}
+
+model location {
+    id                 String  @id @default(cuid())
+    parent_location_id String?
+    location_name      String
+    country_id         String?
+
+    country                               country?                                @relation(fields: [country_id], references: [id])
+    location_type                         LOCATION_TYPE
+    business_unit                         business_unit[]
+    energy_emission_factor                energy_emission_factor[]
+    parent_loc                            location?                               @relation("parent_rel", fields: [parent_location_id], references: [id])
+    child_loc                             location[]                              @relation("parent_rel")
+    stationary_combustion_emission_factor stationary_combustion_emission_factor[]
+}
+
+model business_unit {
+    id                                    String                                  @id @default(cuid())
+    parent_bu_id                          String?
+    bu_name                               String
+    bu_description                        String?
+    location_id                           String
+    company_id                            String
+    is_deleted                            Boolean?                                @default(false)
+    bu_user_mapping                       bu_user_mapping[]
+    company                               company                                 @relation(fields: [company_id], references: [id])
+    location                              location                                @relation(fields: [location_id], references: [id])
+    parent_bu                             business_unit?                          @relation("parent_bu", fields: [parent_bu_id], references: [id])
+    child_bu                              business_unit[]                         @relation("parent_bu")
+    energy_consumption                    energy_consumption[]
+    fugitive_emission                     fugitive_emission[]
+    mobile_consumption                    mobile_consumption[]
+    process_emission                      process_emission[]
+    report                                report[]
+    data_hub                              data_hub[]
+    staionary_combustion_consumption      staionary_combustion_consumption[]
+    report_question_business_unit_mapping report_question_business_unit_mapping[]
+    report_question_frequency_mapping     report_question_frequency_mapping[]
+    supporting_evidence                   supporting_evidence[]
+}
+
+model bu_user_mapping {
+    id            String        @id @default(cuid())
+    bu_id         String
+    user_id       String
+    user_type     String
+    is_deleted    Boolean?      @default(false)
+    business_unit business_unit @relation(fields: [bu_id], references: [id])
+    user          AuthUser      @relation(fields: [user_id], references: [id])
+}
+
+view v_mobile_consumption_energy_emission {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    fuel_id                                 Int?
+    fuel_name                               String?
+    transportation_mode_id                  Int?
+    transportation_mode_name                String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    fuel_density                            Float?
+    fuel_calorific_value                    Float?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kg                          Float?
+    energy_consumption_kj                   Float?
+    emissions_co2e_kg                       Float?
+    emissions_co2e_tn                       Float?
+}
+
+view v_process_emission {
+    id               String    @unique
+    company_id       String?
+    emission_type_id Int?
+    emission_gas     String?
+    input_emission   Float?
+    input_unit       String?
+    input_unit_id    Int?
+    input_start_date DateTime? @db.Date
+    input_end_date   DateTime? @db.Date
+    bu_id            String?
+    emission_kg      Float?
+    emission_tn      Float?
+    gwp              Float?
+    emission_co2e_kg Float?
+    emission_co2e_tn Float?
+}
+
+view v_stationary_combustion_energy_emission {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    fuel_id                                 Int?
+    fuel_name                               String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    fuel_density                            Float?
+    fuel_calorific_value                    Float?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kg                          Float?
+    energy_consumption_kj                   Float?
+    emissions_co2e_kg                       Float?
+    emissions_co2e_tn                       Float?
+}
+
+view v_fugitive_emission {
+    id               String    @unique
+    company_id       String?
+    emission_type_id Int?
+    emission_gas     String?
+    input_emission   Float?
+    input_unit       String?
+    input_unit_id    Int?
+    input_start_date DateTime? @db.Date
+    input_end_date   DateTime? @db.Date
+    bu_id            String?
+    emission_kg      Float?
+    emission_tn      Float?
+    gwp              Float?
+    emission_co2e_kg Float?
+    emission_co2e_tn Float?
+}
+
+view v_energy_emission_scope2 {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    energy_source_id                        Int?
+    source_name                             String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kwh                         Float?
+    emissions_co2e_tn                       Float?
+}
+
+view v_mobile_consumption_energy_emission_without_submit {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    fuel_id                                 Int?
+    fuel_name                               String?
+    transportation_mode_id                  Int?
+    transportation_mode_name                String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    fuel_density                            Float?
+    fuel_calorific_value                    Float?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kg                          Float?
+    energy_consumption_kj                   Float?
+    emissions_co2e_kg                       Float?
+    emissions_co2e_tn                       Float?
+}
+
+view v_process_emission_without_submit {
+    id               String    @unique
+    company_id       String?
+    emission_type_id Int?
+    emission_gas     String?
+    input_emission   Float?
+    input_unit       String?
+    input_unit_id    Int?
+    input_start_date DateTime? @db.Date
+    input_end_date   DateTime? @db.Date
+    bu_id            String?
+    emission_kg      Float?
+    emission_tn      Float?
+    gwp              Float?
+    emission_co2e_kg Float?
+    emission_co2e_tn Float?
+}
+
+view v_stationary_combustion_energy_emission_without_submit {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    fuel_id                                 Int?
+    fuel_name                               String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    fuel_density                            Float?
+    fuel_calorific_value                    Float?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kg                          Float?
+    energy_consumption_kj                   Float?
+    emissions_co2e_kg                       Float?
+    emissions_co2e_tn                       Float?
+}
+
+view v_fugitive_emission_without_submit {
+    id               String    @unique
+    company_id       String?
+    emission_type_id Int?
+    emission_gas     String?
+    input_emission   Float?
+    input_unit       String?
+    input_unit_id    Int?
+    input_start_date DateTime? @db.Date
+    input_end_date   DateTime? @db.Date
+    bu_id            String?
+    emission_kg      Float?
+    emission_tn      Float?
+    gwp              Float?
+    emission_co2e_kg Float?
+    emission_co2e_tn Float?
+}
+
+view v_energy_emission_scope2_without_submit {
+    id                                      String    @unique
+    company_id                              String?
+    bu_id                                   String?
+    bu_name                                 String?
+    energy_source_id                        Int?
+    source_name                             String?
+    input_start_date                        DateTime? @db.Date
+    input_end_date                          DateTime? @db.Date
+    measurement_basis_name                  String?
+    emission_factor_location_id             String?
+    emission_factor_location_name           String?
+    emission_factor_co2                     Float?
+    input_consumption                       Float?
+    input_unit                              String?
+    consumption_converted_to_preferred_unit Float?
+    converted_preferred_unit                String?
+    consumption_kwh                         Float?
+    emissions_co2e_tn                       Float?
+}
+
+enum AUDIT_STATUS {
+    PENDING
+    REJECTED
+    COMPLETED
+}
+
+enum EVENT_TYPE {
+    ASSESSMENT_SUBMITTED
+    ASSESSMENT_REJECTED
+    ASSESSMENT_APPROVED
+    ASSESSMENT_COMPLETED
+    EMAIL_SUPPLIER_CREATED
+    ASSESSMENT_DATA_DUE
+    AUDIT_COMPLETED
+    AUDIT_FAILED
+    FIRST_LOGIN
+    ASSESSMENT_RECURRENCE_CREATED
+    AUDIT_DUE
+    IN_PROGRESS
+}
+
+enum NOTIFICATION_USER_TYPE {
+    AUDITOR
+    SPOC
+    CUSTOMER
+}
+
+enum JOB_STATUS {
+    SUCCESS
+    FAIL
+}
+
+enum ASSESSMENT_QUESTION_STATUS {
+    DATA_INCOMPLETE
+    IN_PROGRESS
+    COMPLETED
+}
+
+enum LOCATION_TYPE {
+    GLOBAL
+    COUNTRY
+    LOCATION
+}
+
+enum REPORT_STATUS {
+    IN_PROGRESS
+    IN_AUDIT
+    REJECTED
+    COMPLETED
+}
+
+enum ASSIGNMENT_STATUS {
+    NONE
+    COLLABORATION
+    ASSIGNMENT
+    LOCKED
+}
+
+enum QUESTION_APPROVAL_STATUS {
+    PENDING
+    REJECTED
+    COMPLETED
+}
+
+enum QUESTION_TOPIC_TYPE {
+    NULL
+    ESSENTIAL
+    LEADERSHIP
+}
+
+enum REPORTING_PERIOD_TYPE {
+    FINANCIAL_YEAR
+    MONTH
+}
+
+enum REPORTING_FREQUENCY {
+    YEARLY
+    MONTHLY
+}
+
+enum ESG {
+    ENVIRONMENT
+    SOCIAL
+    GOVERNANCE
+}
+
+model report {
+    id                         String                   @id @default(cuid())
+    name                       String
+    data_start_date            DateTime                 @db.Date
+    data_end_date              DateTime                 @db.Date
+    data_due_date              DateTime
+    audit_due_date             DateTime
+    bu_id                      String
+    customer_auditor_id        String
+    reporting_framework_id     String?
+    reporting_framework        reporting_framework?     @relation(fields: [reporting_framework_id], references: [id])
+    reporting_sub_framework_id String?
+    reporting_sub_framework    reporting_sub_framework? @relation(fields: [reporting_sub_framework_id], references: [id])
+    created_at                 DateTime                 @default(now())
+    created_by_id              String
+    updated_at                 DateTime                 @updatedAt
+    created_by                 AuthUser                 @relation("report_created_by_id", fields: [created_by_id], references: [id])
+    business_unit              business_unit            @relation(fields: [bu_id], references: [id])
+    customer_auditor           customer_auditor         @relation(fields: [customer_auditor_id], references: [id])
+    status                     REPORT_STATUS            @default(IN_PROGRESS)
+    ry_code                    String?
+    reporting_year             reporting_year?          @relation(fields: [ry_code], references: [ry_code])
+    // unique key needs to be modified to include rp_code after initial migration
+
+    report_material_topic report_material_topic[]
+}
+
+model report_material_topic {
+    id                String            @id @default(cuid())
+    material_topic_id String
+    report_id         String
+    material_topic    material_topic    @relation(fields: [material_topic_id], references: [id])
+    report            report            @relation(fields: [report_id], references: [id])
+    report_question   report_question[]
+}
+
+model report_question {
+    id                                    String                                  @id @default(cuid())
+    report_material_topic_id              String
+    question_id                           Int
+    question                              questions                               @relation(fields: [question_id], references: [id])
+    report_material_topic                 report_material_topic                   @relation(fields: [report_material_topic_id], references: [id])
+    audit_status                          AUDIT_STATUS                            @default(PENDING)
+    audit_completion_date                 DateTime?
+    submitted                             Boolean                                 @default(false)
+    submittedAt                           DateTime?
+    question_status                       ASSESSMENT_QUESTION_STATUS              @default(DATA_INCOMPLETE)
+    notes                                 String?
+    is_data_available                     Boolean                                 @default(true) // check if these are required . depends on the usage
+    is_edit_locked                        Boolean                                 @default(false) // only for CSO and STM not locked for collaborators
+    assignment_status                     ASSIGNMENT_STATUS                       @default(NONE)
+    report_question_business_unit_mapping report_question_business_unit_mapping[]
+    supporting_evidence                   supporting_evidence[]
+    report_question_comment_mapping       report_question_comment_mapping?
+    reporting_frequency                   REPORTING_FREQUENCY                     @default(YEARLY)
+    report_question_frequency_mapping     report_question_frequency_mapping[]
+}
+
+model report_question_business_unit_mapping {
+    id                           String                         @id @default(cuid())
+    report_question_id           String
+    bu_id                        String
+    question_status              ASSESSMENT_QUESTION_STATUS     @default(DATA_INCOMPLETE)
+    approval_status              QUESTION_APPROVAL_STATUS       @default(PENDING)
+    assignment_status            ASSIGNMENT_STATUS              @default(NONE)
+    acceptedAt                   DateTime?
+    rejectedAt                   DateTime?
+    is_data_available            Boolean                        @default(true)
+    business_unit                business_unit                  @relation(fields: [bu_id], references: [id])
+    report_question              report_question                @relation(fields: [report_question_id], references: [id])
+    report_question_user_mapping report_question_user_mapping[]
+}
+
+model report_question_frequency_mapping {
+    id                 String                     @id @default(cuid())
+    report_question_id String
+    bu_id              String?
+    question_status    ASSESSMENT_QUESTION_STATUS @default(DATA_INCOMPLETE)
+    is_data_available  Boolean                    @default(true)
+    rp_code            String?
+    reporting_period   reporting_period?          @relation(fields: [rp_code], references: [rp_code])
+    business_unit      business_unit?             @relation(fields: [bu_id], references: [id])
+    report_question    report_question            @relation(fields: [report_question_id], references: [id])
+    approval_status    QUESTION_APPROVAL_STATUS   @default(PENDING)
+}
+
+model report_question_user_mapping {
+    id                         String                                @id @default(cuid())
+    report_question_bu_id      String
+    user_id                    String
+    role                       String
+    is_edit_locked             Boolean                               @default(false)
+    user                       AuthUser                              @relation(fields: [user_id], references: [id])
+    report_question_bu_mapping report_question_business_unit_mapping @relation(fields: [report_question_bu_id], references: [id])
+}
+
+model data_point {
+    id       String @id @default(cuid())
+    category String //percentage, dropdwon, boolean, number etc.
+
+    title                String
+    description          String?
+    data_point_ref_id    String
+    answer_layout        answer_layout[]
+    is_unit              Boolean            @default(false)
+    measurement_basis_id Int?
+    measurement_basis    measurement_basis? @relation(fields: [measurement_basis_id], references: [id])
+
+    prev_fy_diff                         Int                                    @default(0)
+    prev_fy_data_point_id                String?
+    prev_fy_data_point                   data_point?                            @relation("prev_fy_data_point", fields: [prev_fy_data_point_id], references: [id])
+    unit_data_point_id                   String?
+    unit_data_point                      data_point?                            @relation("unit_data_point", fields: [unit_data_point_id], references: [id])
+    data_point_option_mapping            data_point_option_mapping[]
+    data_hub                             data_hub[]
+    data_point_measurement_basis_mapping data_point_measurement_basis_mapping[]
+    data_point_unit                      data_point[]                           @relation("unit_data_point")
+
+    data_point_prev_fy data_point[] @relation("prev_fy_data_point")
+
+    answer_layout_row_column_data_point_mapping answer_layout_row_column_data_point_mapping[]
+    depend_data_point_ref                       answer_layout_row_column_data_point_mapping[] @relation("depend_on_data_ref")
+}
+
+model data_point_measurement_basis_mapping {
+    id                   String            @id @default(cuid())
+    data_point_id        String
+    measurement_basis_id Int
+    data_point           data_point        @relation(fields: [data_point_id], references: [id])
+    measurement_basis    measurement_basis @relation(fields: [measurement_basis_id], references: [id])
+
+    @@unique([data_point_id, measurement_basis_id])
+}
+
+model data_point_option {
+    id                                          String                                        @id @default(cuid())
+    data_point_option_mapping                   data_point_option_mapping[]
+    label                                       String
+    value                                       String
+    type                                        String //percentage,number,boolean,dropdown etc.
+    answer_layout                               answer_layout[]
+    answer_layout_row_column_data_point_mapping answer_layout_row_column_data_point_mapping[]
+}
+
+model data_point_option_mapping {
+    id                   String            @id @default(cuid())
+    data_point_id        String
+    data_point_option_id String
+    sequence             Int               @default(0)
+    data_point           data_point        @relation(fields: [data_point_id], references: [id])
+    data_point_option    data_point_option @relation(fields: [data_point_option_id], references: [id])
+}
+
+model answer_layout {
+    id                                                              String                                                            @id @default(cuid())
+    answer_layout_row                                               answer_layout_row[]
+    answer_layout_column                                            answer_layout_column[]
+    sequence                                                        Int
+    category                                                        String
+    //FIXED-TABLE
+    //FIXED-TABLE-DYNAMIC-ROW
+    //FIXED-TABLE-DYNAMIC-COLUMN
+    //FIXED-TABLE-DYNAMIC-ROW-COLUMN
+    //TEXTBOX
+    //TEXTBOX-LARGE
+    //DROPDOWN
+    //DROPDOWN-MULTISELECT
+    //DROPDOWN-SEARCHABLE
+    //DROPDOWN-SEARCHABLE-MULTISELECT
+    //DROPDOWN-YES-NO
+    title                                                           String?
+    is_delegatable                                                  Boolean                                                           @default(false)
+    followup_question                                               Boolean                                                           @default(false)
+    depends_on_data_point_id                                        String?
+    depends_on_data_point                                           data_point?                                                       @relation(fields: [depends_on_data_point_id], references: [id])
+    depends_on_data_point_option_id                                 String?
+    depends_on_data_point_option                                    data_point_option?                                                @relation(fields: [depends_on_data_point_option_id], references: [id])
+    question_id                                                     Int?
+    question                                                        questions?                                                        @relation(fields: [question_id], references: [id])
+    is_monthly_allowed                                              Boolean                                                           @default(false)
+    no_data_collection_years                                        Int                                                               @default(1)
+    //additional columns for configs of styles, should we move this to a .json, makes more flexible
+    answer_layout_stationary_combustion_fuel_sequence_mapping       answer_layout_stationary_combustion_fuel_sequence_mapping[]
+    answer_layout_mobile_consumption_transportation_mode_sequence_m answer_layout_mobile_consumption_transportation_mode_sequence_m[]
+    answer_layout_process_emission_emission_types_sequence_mapping  answer_layout_process_emission_emission_types_sequence_mapping[]
+    answer_layout_fugitive_emission_emission_types_sequence_mapping answer_layout_fugitive_emission_emission_types_sequence_mapping[]
+    answer_layout_energy_consumption_energy_source_sequence_mapping answer_layout_energy_consumption_energy_source_sequence_mapping[]
+}
+
+model answer_layout_stationary_combustion_fuel_sequence_mapping {
+    answer_layout_id String
+    fuel_id          Int //this will be used as sequence
+    answer_layout    answer_layout @relation(fields: [answer_layout_id], references: [id], map: "answer_layout_id")
+    fuel             fuel          @relation(fields: [fuel_id], references: [id], map: "fuel_id")
+
+    @@unique([answer_layout_id, fuel_id])
+}
+
+model answer_layout_mobile_consumption_transportation_mode_sequence_m {
+    answer_layout_id       String
+    transportation_mode_id Int //this will be used as sequence
+    answer_layout          answer_layout       @relation(fields: [answer_layout_id], references: [id], map: "answer_layout_id")
+    transportation_mode    transportation_mode @relation(fields: [transportation_mode_id], references: [id], map: "transportation_mode_id")
+
+    @@unique([answer_layout_id, transportation_mode_id])
+}
+
+model answer_layout_process_emission_emission_types_sequence_mapping {
+    answer_layout_id String
+    emission_type_id Int //this will be used as sequence
+    answer_layout    answer_layout  @relation(fields: [answer_layout_id], references: [id], map: "answer_layout_id")
+    emission_types   emission_types @relation(fields: [emission_type_id], references: [id], map: "emission_type_id")
+
+    @@unique([answer_layout_id, emission_type_id])
+}
+
+model answer_layout_fugitive_emission_emission_types_sequence_mapping {
+    answer_layout_id String
+    emission_type_id Int //this will be used as sequence
+    answer_layout    answer_layout  @relation(fields: [answer_layout_id], references: [id], map: "answer_layout_id")
+    emission_types   emission_types @relation(fields: [emission_type_id], references: [id], map: "emission_type_id")
+
+    @@unique([answer_layout_id, emission_type_id])
+}
+
+model answer_layout_energy_consumption_energy_source_sequence_mapping {
+    answer_layout_id String
+    energy_source_id Int //this will be used as sequence
+    answer_layout    answer_layout @relation(fields: [answer_layout_id], references: [id], map: "answer_layout_id")
+    energy_source    energy_source @relation(fields: [energy_source_id], references: [id], map: "energy_source_id")
+
+    @@unique([answer_layout_id, energy_source_id])
+}
+
+model answer_layout_row {
+    id                                          String                                        @id @default(cuid())
+    answer_layout_id                            String
+    title                                       String
+    description                                 String?
+    category                                    String
+    //DEFAULT
+    sequence                                    Int
+    answer_layout                               answer_layout                                 @relation(fields: [answer_layout_id], references: [id])
+    answer_layout_row_column_data_point_mapping answer_layout_row_column_data_point_mapping[]
+}
+
+model answer_layout_column {
+    id                                          String                                        @id @default(cuid())
+    answer_layout_id                            String
+    title                                       String
+    description                                 String?
+    category                                    String
+    sequence                                    Int
+    answer_layout                               answer_layout                                 @relation(fields: [answer_layout_id], references: [id])
+    answer_layout_row_column_data_point_mapping answer_layout_row_column_data_point_mapping[]
+}
+
+model answer_layout_row_column_data_point_mapping {
+    id                                   String   @id @default(cuid())
+    data_point_id                        String
+    answer_layout_row_id                 String?
+    answer_layout_column_id              String?
+    depends_on_data_point_id             String?
+    depends_on_data_point_option_id      String?
+    is_same_data_point_for_entire_column Boolean? @default(false)
+
+    depends_on_data_point data_point?           @relation("depend_on_data_ref", fields: [depends_on_data_point_id], references: [id])
+    data_point            data_point            @relation(fields: [data_point_id], references: [id])
+    answer_layout_row     answer_layout_row?    @relation(fields: [answer_layout_row_id], references: [id], map: "answer_layout_row_id")
+    answer_layout_column  answer_layout_column? @relation(fields: [answer_layout_column_id], references: [id], map: "answer_layout_column_id")
+    editable              Boolean               @default(true)
+    formula               String?
+    unit_formula          String? //this will be used to calculate the unit
+    data_point_option     data_point_option?    @relation(fields: [depends_on_data_point_option_id], references: [id], map: "depends_on_data_point_option_id")
+
+    @@unique([answer_layout_row_id, answer_layout_column_id, data_point_id])
+}
+
+model data_hub {
+    id            String  @id @default(cuid())
+    data_point_id String
+    response      String?
+
+    bu_id                         String
+    start_date                    DateTime          @db.Date
+    end_date                      DateTime          @db.Date
+    created_at                    DateTime          @default(now())
+    last_updated_at               DateTime          @updatedAt
+    created_by_id                 String
+    last_updated_by_id            String
+    audit_status                  AUDIT_STATUS
+    is_submitted                  Boolean           @default(false)
+    submittedAt                   DateTime?
+    business_unit                 business_unit     @relation(fields: [bu_id], references: [id])
+    sequence                      Int               @default(0)
+    data_point                    data_point        @relation(fields: [data_point_id], references: [id])
+    rp_code                       String?
+    reporting_period              reporting_period? @relation(fields: [rp_code], references: [rp_code])
+    // unique key needs to be modified to include rp_code after initial migration
+    is_data_available             Boolean           @default(true)
+    last_completed_in_question_id Int?
+    last_completed_in_question    questions?        @relation(fields: [last_completed_in_question_id], references: [id])
+
+    @@unique([data_point_id, bu_id, start_date, end_date, sequence])
+}
+
+model report_question_comment_mapping {
+    id                 String           @id @default(cuid())
+    report_question_id String
+    reort_question     report_question  @relation(fields: [report_question_id], references: [id])
+    report_comment     report_comment[]
+
+    @@unique([report_question_id])
+}
+
+model report_comment {
+    id                                 String                          @id @default(cuid())
+    created_by_id                      String
+    created_at                         DateTime                        @default(now())
+    comment_text                       String
+    report_question_comment_mapping_id String
+    report_question_comment_mapping    report_question_comment_mapping @relation(fields: [report_question_comment_mapping_id], references: [id])
+    created_by                         AuthUser                        @relation(fields: [created_by_id], references: [id])
+    rp_code                            String?
+    reporting_period                   reporting_period?               @relation(fields: [rp_code], references: [rp_code])
+}
+
+model reporting_framework {
+    id                          String                        @id @default(cuid())
+    name                        String
+    description                 String?
+    sequence                    Int
+    is_active                   Boolean                       @default(true)
+    created_at                  DateTime                      @default(now())
+    reporting_framework_section reporting_framework_section[]
+    material_topic              material_topic[]
+    report                      report[]
+    sub_framework               reporting_sub_framework[]
+}
+
+model reporting_sub_framework {
+    id                            String              @id @default(cuid())
+    name                          String
+    description                   String?
+    parent_reporting_framework_id String
+    is_active                     Boolean             @default(true)
+    parent_reporting_framework    reporting_framework @relation(fields: [parent_reporting_framework_id], references: [id])
+    report                        report[]
+}
+
+model reporting_framework_section {
+    id                                           String                                         @id @default(cuid())
+    reporting_framework_id                       String
+    name                                         String
+    description                                  String?
+    sequence                                     Int
+    is_active                                    Boolean                                        @default(true)
+    reporting_framework                          reporting_framework                            @relation(fields: [reporting_framework_id], references: [id])
+    reporting_framework_section_question_mapping reporting_framework_section_question_mapping[]
+
+    @@unique([reporting_framework_id, name, sequence])
+}
+
+model reporting_framework_section_question_mapping {
+    id                             String                      @id @default(cuid())
+    reporting_framework_section_id String
+    question_id                    Int
+    is_active                      Boolean                     @default(true)
+    reporting_framework_section    reporting_framework_section @relation(fields: [reporting_framework_section_id], references: [id])
+    question                       questions                   @relation(fields: [question_id], references: [id])
+
+    @@unique([reporting_framework_section_id, question_id])
+}
+
+model calendar_month {
+    id                   Int                    @id @default(autoincrement())
+    month_numeric        Int                    @unique
+    month_short_name     String
+    month_full_name      String
+    reporting_year_month reporting_year_month[]
+}
+
+model financial_year_cycle {
+    id             Int              @id @default(autoincrement())
+    fy_short_name  String
+    fy_full_name   String
+    reporting_year reporting_year[]
+}
+
+model reporting_period {
+    id                                          Int                                           @id @default(autoincrement())
+    rp_code                                     String                                        @unique
+    start_date                                  DateTime                                      @db.Date
+    end_date                                    DateTime                                      @db.Date
+    type                                        REPORTING_PERIOD_TYPE
+    reporting_year                              reporting_year[]
+    reporting_year_month                        reporting_year_month[]
+    data_hub                                    data_hub[]
+    customer_supplier_setting                   customer_supplier_setting[]
+    staionary_combustion_consumption            staionary_combustion_consumption[]
+    mobile_consumption                          mobile_consumption[]
+    process_emission                            process_emission[]
+    fugitive_emission                           fugitive_emission[]
+    energy_consumption                          energy_consumption[]
+    assessment_master                           assessment_master[]
+    assessment                                  assessment[]
+    esg_aggregated_indicator                    esg_aggregated_indicator[]
+    emission_energy_fuel_source_aggregate       emission_energy_fuel_source_aggregate[]
+    emission_energy_supplier_category_aggregate emission_energy_supplier_category_aggregate[]
+    report_question_frequency_mapping           report_question_frequency_mapping[]
+    report_comment                              report_comment[]
+    comment                                     comment[]
+    supporting_evidence                         supporting_evidence[]
+
+    @@unique([start_date, end_date])
+}
+
+model reporting_year {
+    id                      Int                  @id @default(autoincrement())
+    ry_code                 String               @unique
+    ry_short_name           String
+    ry_full_name            String
+    rp_code                 String               @unique
+    financial_year_cycle_id Int
+    reporting_period        reporting_period     @relation(fields: [rp_code], references: [rp_code])
+    financial_year_cycle    financial_year_cycle @relation(fields: [financial_year_cycle_id], references: [id])
+    report                  report[]
+}
+
+model reporting_year_month {
+    id               Int              @id @default(autoincrement())
+    ry_code          String
+    rp_code          String
+    month_id         Int
+    year             Int
+    sequence         Int
+    reporting_period reporting_period @relation(fields: [rp_code], references: [rp_code])
+    month            calendar_month   @relation(fields: [month_id], references: [id])
+
+    @@unique([ry_code, rp_code])
+}
+
+model seed_data_log {
+    id          Int      @id @default(autoincrement())
+    name        String
+    started_at  DateTime @default(now())
+    finished_at DateTime @default(now())
+    status      String
+    message     String?
+}

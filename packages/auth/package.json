@@ -1,0 +1,33 @@
+{
+	"name": "auth",
+	"version": "1.0.0",
+	"private": true,
+	"main": "index.ts",
+	"types": "app.d.ts",
+	"exports": {
+		".": {
+			"import": "./index.ts",
+			"require": "./index.js"
+		},
+		"./index": {
+			"import": "./index.ts",
+			"require": "./index.js"
+		},
+		"./index.js": "./index.js",
+		"./index.ts": "./index.ts"
+	},
+	"type": "module",
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@lucia-auth/adapter-prisma": "^4.0.0",
+		"db": "*",
+		"lucia": "^3.0.1",
+		"oslo": "^1.0.4"
+	},
+	"devDependencies": {
+		"@repo/typescript-config": "*"
+	},
+	"description": ""
+}
